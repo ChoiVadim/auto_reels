@@ -2,16 +2,27 @@ from math import floor, ceil
 from dotenv import load_dotenv
 
 from modules.utils import *
-from modules.openai_module import analyze_transcript_openai
+from modules.youtube_module import *
+from modules.openai_module import *
 
 load_dotenv()
 
-url = "https://www.youtube.com/watch?v=UHXCSeoU-YM"
-
+# Delete all previous downloaded files
 delete_all_files_in_directory("videos")
-download_youtube_video(url)
-transcript = get_transcript(url.split("v=")[1])
+
+# Search and download video
+video_id = search_youtube_videos(os.getenv("YOUTUBE_API_KEY"), "ELLE", 1)[0]
+print(video_id)
+download_youtube_video(video_id)
+
+# Get transcript and analyze
+transcript = get_transcript(video_id)
 data = analyze_transcript_openai("".join(str(i) for i in transcript))
+print(data)
+
+# Create video
 cut_video(floor(data["start"]), ceil(data["end"]))
 create_vertical_video_with_text(text="\n".join(data["text"]))
+
+# Upload to instagram
 upload_to_instagram("videos/final_video.mp4", "Like this video!")

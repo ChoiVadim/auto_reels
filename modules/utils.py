@@ -2,10 +2,7 @@ import os
 import shutil
 from time import sleep
 
-import yt_dlp
-import requests
 from instagrapi import Client
-from youtube_transcript_api import YouTubeTranscriptApi
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.editor import TextClip, CompositeVideoClip
 
@@ -13,23 +10,9 @@ from moviepy.editor import TextClip, CompositeVideoClip
 def upload_to_instagram(video_path, caption):
     cl = Client()
     sleep(3)
-    cl.login(username=os.environ("INST_USERNAME"), password=os.environ("INST_PASSWORD"))
+    cl.login(username=os.getenv("INST_USERNAME"), password=os.getenv("INST_PASSWORD"))
     sleep(5)
     cl.clip_upload(video_path, caption=caption)
-
-
-def download_youtube_video(url, output_path="videos/video.mp4"):
-    ydl_opts = {
-        "format": "mp4",
-        "outtmpl": output_path,
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-
-
-def get_transcript(video_id):
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
-    return transcript
 
 
 def cut_video(
