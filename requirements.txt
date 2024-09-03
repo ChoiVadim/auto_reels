@@ -1,1 +1,11 @@
 google-api-python-client
+openai
+instagrapi
+moviepy
+youtube-transcript-api
+yt_dlp
+python-dotenv
+pillow
+telebot
+schedule
+isodate

@@ -1,0 +1,6 @@
+.env
+venv
+*cache*
+session.json
+log.log
+videos/
