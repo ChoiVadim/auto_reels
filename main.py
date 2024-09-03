@@ -1,5 +1,3 @@
-import threading
-import signal
 from time import sleep
 from random import randint
 from math import floor, ceil
@@ -19,14 +17,9 @@ inst_bot = InstagramBot(
     password=os.getenv("INST_PASSWORD"),
 )
 
-stop_scheduler = False
-
 
 def start_autoreels() -> None:
-    global stop_scheduler
-    stop_scheduler = True
-
-    while video_is_verified is False:
+    while config.video_is_verified is False:
         # Delete all previous downloaded files
         delete_all_files_in_directory("videos")
 
@@ -43,38 +36,50 @@ def start_autoreels() -> None:
         logging.info(data)
 
         # # Create video
-        cut_video(floor(data["start"]), ceil(data["end"]))
+        cut_video(
+            floor(data["start"]),
+            ceil(data["end"]),
+            input_video="videos/video" + video_id + ".mp4",
+            output_video="videos/cut_video.mp4",
+        )
+
         create_vertical_video_with_text_and_image(
             text="\n".join(i.capitalize() for i in data["text"]),
             image_path="C:/Users/82102/Desktop/auto_reels/images/white_frame.png",
         )
 
         # Send video to Telegram for review
+        print("Sending video for review...")
         send_video_for_review()
 
         # Run a short polling loop to check for the response
+        print("Polling for response...")
         poll_for_response()
 
-    if video_is_verified:
-        inst_bot.login()
-        sleep(5)
-        inst_bot.upload_video(
-            "C:/Users/82102/Desktop/auto_reels/videos/final_video.mp4",
-            "If you like the video, please like and subscribe!",
-        )
+    config.video_is_verified = False
+
+    print("Video verified. Uploading to Instagram...")
+    sleep(5)
+    inst_bot.login()
+    sleep(5)
+    inst_bot.upload_video(
+        "C:/Users/82102/Desktop/auto_reels/videos/final_video.mp4",
+        "If you like the video, please like and subscribe!",
+    )
+    print("Done!")
 
 
 def run_scheduler():
-    schedule.every().day.at("01:27").do(start_autoreels)
-    while not stop_scheduler:
+    schedule.every().day.at("02:50").do(start_autoreels)
+    print("Starting program...")
+    # schedule.every(2).minutes.do(start_autoreels)
+    while True:
         schedule.run_pending()
         sleep(1)
-    print("Scheduler stopped.")
 
 
 def main():
-    while True:
-        run_scheduler()
+    run_scheduler()
 
 
 if __name__ == "__main__":

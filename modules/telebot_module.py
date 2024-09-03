@@ -1,9 +1,11 @@
 import os
-from telebot import TeleBot
-from telebot import types
 from time import sleep
 
-from modules.conf import *
+from telebot import TeleBot
+from telebot import types
+
+from modules.conf import config
+
 
 tele_bot = TeleBot(os.getenv("TELEBOT_TOKEN"))
 
@@ -30,25 +32,24 @@ def send_video_for_review():
 def callback_query(call):
     if call.data == "yes":
         tele_bot.send_message(call.message.chat.id, "You liked the video!")
-        video_is_verified = True
-        waiting_for_verification = False
+        config.video_is_verified = True
+        config.waiting_for_verification = False
     elif call.data == "no":
         tele_bot.send_message(call.message.chat.id, "You didn't like the video!")
-        waiting_for_verification = False
+        config.waiting_for_verification = False
 
 
 def poll_for_response():
-    # Polling loop to wait for user response, but not running indefinitely
-    start_time = sleep(1)
-    timeout = 60 * 10  # 10 minutes to wait for the response
+    last_update_id = None  # Track the last processed update ID
 
-    while sleep(1) - start_time < timeout:
-        tele_bot.process_new_updates(tele_bot.get_updates())
-        if waiting_for_verification is False:
-            break
+    while config.waiting_for_verification is True:
+        print("Waiting for response...")
 
-    if video_is_verified is None:
-        logging.info("No response received in the allotted time.")
+        updates = tele_bot.get_updates(offset=last_update_id)
 
-    # Stop polling after the response or timeout
-    tele_bot.stop_polling()
+        if updates:
+            for update in updates:
+                last_update_id = update.update_id + 1  # Update the offset
+                tele_bot.process_new_updates([update])
+
+    config.waiting_for_verification = True

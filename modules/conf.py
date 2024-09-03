@@ -1,5 +1,6 @@
 import logging
 from dotenv import load_dotenv
+from dataclasses import dataclass
 
 load_dotenv()
 
@@ -10,5 +11,11 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-video_is_verified: bool = False
-waiting_for_verification: bool = True
+
+@dataclass
+class Config:
+    video_is_verified: bool = False
+    waiting_for_verification: bool = True
+
+
+config = Config()
