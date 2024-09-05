@@ -76,5 +76,15 @@ class InstagramBot:
             raise Exception("User is not logged in")
         try:
             self.cl.clip_upload(video_path, caption=caption)
+            logging.info("Video uploaded to Instagram successfully!")
+
         except Exception as e:
             logging.error("Couldn't upload video: %s" % e)
+
+    def __exit__(self, type, value, traceback) -> None:
+        pass
+
+    def __enter__(self) -> Client:
+        self.login()
+        self.cl.delay_range = [3, 5]
+        return self

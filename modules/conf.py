@@ -19,3 +19,5 @@ class Config:
 
 
 config = Config()
+
+videos_folder_path = "C:/Users/82102/Desktop/auto_reels/videos/"

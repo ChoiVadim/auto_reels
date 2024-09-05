@@ -1,8 +1,9 @@
 import os
+import requests
 from time import sleep
 
-from telebot import TeleBot
-from telebot import types
+from telebot import TeleBot  # type: ignore
+from telebot import types  # type: ignore
 
 from modules.conf import config
 
@@ -10,13 +11,22 @@ from modules.conf import config
 tele_bot = TeleBot(os.getenv("TELEBOT_TOKEN"))
 
 
-def send_video_for_review():
+def send_video_for_review(video_path):
+    print("Sending video for review...")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    video_path = "videos/final_video.mp4"
 
     # Sending the video
     with open(video_path, "rb") as video:
-        tele_bot.send_video(chat_id, video)
+        max_retries = 3
+        retry_delay = 5
+
+        for attempt in range(max_retries):
+            try:
+                tele_bot.send_video(chat_id, video)
+                break
+            except requests.exceptions.ConnectionError as e:
+                print(f"Connection error: {e}")
+                sleep(retry_delay)
 
     # Creating the markup for the buttons
     markup = types.InlineKeyboardMarkup()

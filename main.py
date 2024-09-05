@@ -12,67 +12,69 @@ from modules.openai_module import *
 from modules.editor_module import *
 from modules.instagram_module import *
 
-inst_bot = InstagramBot(
-    username=os.getenv("INST_USERNAME"),
-    password=os.getenv("INST_PASSWORD"),
-)
 
+def start_auto_reels() -> None:
+    video_path, cut_video_path, final_video_path = None, None, None
 
-def start_autoreels() -> None:
     while config.video_is_verified is False:
-        # Delete all previous downloaded files
-        delete_all_files_in_directory("videos")
+        # Get a list of id with most popular video on youtube in us
+        video_id_list = get_top_videos(os.getenv("YOUTUBE_API_KEY"))
+        video_id = video_id_list[0]
 
-        # Search and download video
-        video_id = get_top_videos(os.getenv("YOUTUBE_API_KEY"))
-        video_id = video_id[randint(0, len(video_id) - 1)]
-        download_youtube_video(video_id)
+        # Initiate paths for video processing
+        video_path = videos_folder_path + "video" + video_id + ".mp4"
+        cut_video_path = videos_folder_path + "cut_video" + video_id + ".mp4"
+        final_video_path = videos_folder_path + "final_video" + video_id + ".mp4"
 
-        # Get transcript
+        try:
+            download_youtube_video(video_id, output_path=video_path)
+        except yt_dlp.utils.DownloadError:
+            video_id = video_id_list[1]
+            download_youtube_video(video_id=video_id, output_path=video_path)
+
+        # Get transcript from youtube (return list of dictionaries)
         transcript = get_transcript(video_id)
 
-        # Analyze transcript
+        # Analyze transcript with openai (return dictionary)
         data = analyze_transcript_openai("".join(str(i) for i in transcript))
         logging.info(data)
 
-        # # Create video
         cut_video(
             floor(data["start"]),
             ceil(data["end"]),
-            input_video="videos/video" + video_id + ".mp4",
-            output_video="videos/cut_video.mp4",
+            input_video=video_path,
+            output_video=cut_video_path,
         )
 
         create_vertical_video_with_text_and_image(
             text="\n".join(i.capitalize() for i in data["text"]),
             image_path="C:/Users/82102/Desktop/auto_reels/images/white_frame.png",
+            video_path=cut_video_path,
+            output_path=final_video_path,
         )
 
         # Send video to Telegram for review
-        print("Sending video for review...")
-        send_video_for_review()
+        send_video_for_review(video_path=final_video_path)
 
-        # Run a short polling loop to check for the response
-        print("Polling for response...")
+        # Wait for user response in Telegram
         poll_for_response()
 
     config.video_is_verified = False
 
-    print("Video verified. Uploading to Instagram...")
-    sleep(5)
-    inst_bot.login()
-    sleep(5)
-    inst_bot.upload_video(
-        "C:/Users/82102/Desktop/auto_reels/videos/final_video.mp4",
-        "If you like the video, please like and subscribe!",
-    )
-    print("Done!")
+    with InstagramBot(
+        username=os.getenv("INSTAGRAM_USERNAME"),
+        password=os.getenv("INSTAGRAM_PASSWORD"),
+    ) as inst_bot:
+        inst_bot.upload_video(
+            final_video_path,
+            "If you like the video, please like and subscribe!",
+        )
 
 
 def run_scheduler():
-    schedule.every().day.at("02:50").do(start_autoreels)
-    print("Starting program...")
-    # schedule.every(2).minutes.do(start_autoreels)
+    run_time = input("Enter run time (HH:MM): ")
+    schedule.every().day.at(run_time).do(start_auto_reels)
+    # schedule.every(2).minutes.do(start_auto_reels)
     while True:
         schedule.run_pending()
         sleep(1)
