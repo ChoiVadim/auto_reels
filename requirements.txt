@@ -1,11 +1,11 @@
+python-dotenv
 google-api-python-client
-openai
-instagrapi
-moviepy
 youtube-transcript-api
 yt_dlp
-python-dotenv
-pillow
+openai
+moviepy
+instagrapi
 telebot
+pillow
 schedule
 isodate
