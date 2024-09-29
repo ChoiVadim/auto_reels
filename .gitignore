@@ -1,5 +1,9 @@
-*cache*
-config
-venv
-/videos
 .env
+venv
+*cache*
+session.json
+log.log
+videos/
+config
+magick
+convert
