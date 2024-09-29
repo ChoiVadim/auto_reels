@@ -10,9 +10,12 @@ from modules.conf import config
 
 tele_bot = TeleBot(os.getenv("TELEBOT_TOKEN"))
 
+markup = types.InlineKeyboardMarkup()
+yes_button = types.InlineKeyboardButton(text="👍", callback_data="yes")
+no_button = types.InlineKeyboardButton(text="👎", callback_data="no")
+markup.add(yes_button, no_button)
 
 def send_video_for_review(video_path):
-    print("Sending video for review...")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
     # Sending the video
@@ -22,31 +25,22 @@ def send_video_for_review(video_path):
 
         for attempt in range(max_retries):
             try:
-                tele_bot.send_video(chat_id, video)
+                tele_bot.send_video(chat_id, video, caption="Video for review" ,reply_markup=markup)
                 break
             except requests.exceptions.ConnectionError as e:
                 print(f"Connection error: {e}")
                 sleep(retry_delay)
 
-    # Creating the markup for the buttons
-    markup = types.InlineKeyboardMarkup()
-    yes_button = types.InlineKeyboardButton(text="Yes", callback_data="yes")
-    no_button = types.InlineKeyboardButton(text="No", callback_data="no")
-    markup.add(yes_button, no_button)
-
-    # Sending the message with the buttons
-    tele_bot.send_message(chat_id, "Did you like the video?", reply_markup=markup)
-
 
 @tele_bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     if call.data == "yes":
-        tele_bot.send_message(call.message.chat.id, "You liked the video!")
+        tele_bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
         config.video_is_verified = True
         config.waiting_for_verification = False
     elif call.data == "no":
-        tele_bot.send_message(call.message.chat.id, "You didn't like the video!")
         config.waiting_for_verification = False
+        tele_bot.delete_message(call.message.chat.id, call.message.message_id)
 
 
 def poll_for_response():
