@@ -1,5 +1,6 @@
 from time import sleep
 from math import floor, ceil
+from random import randint
 
 import schedule
 
@@ -12,13 +13,13 @@ from modules.editor_module import *
 from modules.instagram_module import *
 
 
-def start_auto_reels() -> None:
+def main() -> None:
     video_path, cut_video_path, final_video_path = None, None, None
 
     while config.video_is_verified is False:
         # Get a list of id with most popular video on youtube in us
         video_id_list = get_top_music_videos(os.getenv("YOUTUBE_API_KEY"))
-        video_id = video_id_list[0]
+        video_id = video_id_list[randint(0, len(video_id_list) - 1)]
 
         # Initiate paths for video processing
         video_path = videos_folder_path + "video" + video_id + ".mp4"
@@ -29,12 +30,14 @@ def start_auto_reels() -> None:
         try:
             download_youtube_video(video_id, output_path=video_path)
         except yt_dlp.utils.DownloadError:
-            video_id = video_id_list[1]
+            video_id = video_id_list[randint(0, len(video_id_list) - 1)]
             download_youtube_video(video_id=video_id, output_path=video_path)
 
         # Get transcript from youtube (return list of dictionaries)
-        transcript = get_transcript(video_id)
-        logging.info(transcript)
+        if transcript := get_transcript(video_id):
+            logging.info(transcript)
+        else:
+            continue
 
         # Analyze transcript with openai (return dictionary)
         data = analyze_transcript_openai("".join(str(i) for i in transcript))
@@ -49,7 +52,7 @@ def start_auto_reels() -> None:
         )
         create_vertical_video_with_text_and_image(
             text="\n".join(i.capitalize() for i in data["text"]),
-            image_path="/home/vadim/Desktop/auto_reels/images/white_frame.png",
+            image_path= image_path + "white_frame.png",
             video_path=cut_video_path,
             output_path=final_video_path,
         )
@@ -74,16 +77,12 @@ def start_auto_reels() -> None:
 
 def run_scheduler():
     run_time = input("Enter run time (HH:MM): ")
-    schedule.every().day.at(run_time).do(start_auto_reels)
-    # schedule.every(5).hours.do(start_auto_reels)
+    schedule.every().day.at(run_time).do(main)
+    # schedule.every(5).hours.do(main)
     while True:
         schedule.run_pending()
         sleep(1)
 
 
-def main():
-    run_scheduler()
-
-
 if __name__ == "__main__":
-    main()
+    run_scheduler()

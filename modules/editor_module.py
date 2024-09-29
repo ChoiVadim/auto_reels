@@ -5,7 +5,7 @@ from moviepy.config import change_settings
 
 change_settings({"IMAGEMAGICK_BINARY": r"/usr/bin/convert"})
 
-def cut_video(s
+def cut_video(
     start_time,
     end_time,
     input_video="videos/video.mp4",

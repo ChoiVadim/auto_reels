@@ -1,8 +1,9 @@
 import yt_dlp
 import isodate
 from googleapiclient.discovery import build
-from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
+from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
 
+from modules.conf import logging
 
 def search_youtube_videos(api_key, query, max_results=5):
     youtube = build("youtube", "v3", developerKey=api_key)
@@ -39,8 +40,12 @@ def get_transcript(video_id):
         return transcript
 
     except NoTranscriptFound:
-        print(f"No English subtitles found for video: {video_id}")
+        logging.info(f"No English subtitles found for video: {video_id}")
         return None
+    except TranscriptsDisabled:
+        logging.info(f"Transcripts are disabled for video: {video_id}")
+        return None
+
 
 
 def get_top_videos(api_key, max_duration_minutes=10):

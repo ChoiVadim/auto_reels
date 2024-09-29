@@ -22,3 +22,4 @@ class Config:
 config = Config()
 
 videos_folder_path = "/home/vadim/Desktop/auto_reels/videos/"
+image_path = "/home/vadim/Desktop/auto_reels/images/"

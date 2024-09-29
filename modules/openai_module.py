@@ -36,8 +36,7 @@ def analyze_transcript_openai(text):
             Text: A list of highlighted phrases with their translations into Russian.
 
     Example:
-    If you take this part of the transcript:
-    {'text': "♪ I'LL LOVE YOU 'TIL THE DAY\nTHAT I DIE ♪", 'start': 75.292, 'duration': 5.375}, {'text': "♪ 'TIL THE DAY THAT I DIE ♪", 'start': 80.75, 'duration': 4.583}
+    If you take this part of the transcript: {'text': "♪ I'LL LOVE YOU 'TIL THE DAY\nTHAT I DIE ♪", 'start': 75.292, 'duration': 5.375}, {'text': "♪ 'TIL THE DAY THAT I DIE ♪", 'start': 80.75, 'duration': 4.583},
 
     You would return this JSON response:
     {
@@ -50,6 +49,8 @@ def analyze_transcript_openai(text):
             "THAT I DIE - когда я умру"
         ]
     }
+
+    Where is end time = last phrase start time + segment duration + 1 second
 
     Important:
         -Ensure precise timing and accurate translations.
